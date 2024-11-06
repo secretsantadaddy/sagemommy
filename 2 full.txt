@@ -1,0 +1,60 @@
+2 full
+
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+#define MAX 10
+
+void readArray(int array[], int totalElements) {
+    printf("Enter the array elements:\n");
+    for (int i = 0; i < totalElements; i++) {
+        scanf("%d", &array[i]);
+    }
+}
+
+void displayArray(int array[], int totalElements) {
+    for (int i = 0; i < totalElements; i++) {
+        printf("%d\t", array[i]);
+    }
+    printf("\n");
+}
+
+void bubbleSort(int array[], int totalElements) {
+    for (int i = 0; i < totalElements - 1; i++) {
+        for (int j = 0; j < totalElements - i - 1; j++) {
+            if (array[j] > array[j + 1]) {
+                // Directly swap the elements in the array
+                int temp = array[j];
+                array[j] = array[j + 1];
+                array[j + 1] = temp;
+            }
+        }
+    }
+}
+
+int main() {
+    int pid;
+    int array[MAX], totalElements;
+
+    printf("Enter number of elements in array: ");
+    scanf("%d", &totalElements);
+
+    readArray(array, totalElements);
+
+    pid = fork();
+    if (pid == 0) {  // Child process
+        bubbleSort(array, totalElements);
+        printf("In Child Process\n");
+        displayArray(array, totalElements);
+    } else if (pid > 0) {  // Parent process
+        wait(NULL);  // Wait for child to finish
+        printf("In Parent Process\n");
+        bubbleSort(array, totalElements);
+        displayArray(array, totalElements);
+    } else {
+        printf("Fork failed.\n");
+    }
+
+    return 0;
+}

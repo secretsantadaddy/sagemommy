@@ -1,0 +1,118 @@
+9 page fault
+
+#include <stdio.h>
+#include <stdbool.h>
+
+#define MAX_FRAMES 3
+#define MAX_PAGES 100
+
+int FCFS(int pages[], int n);
+int LRU(int pages[], int n);
+int Optimal(int pages[], int n);
+
+int main() {
+    int pages[] = {1, 2, 3, 4, 1, 2, 5, 1, 2, 3, 4, 5}; 
+    int n = sizeof(pages) / sizeof(pages[0]);
+
+    printf("Reference String: ");
+    for (int i = 0; i < n; i++) {
+        printf("%d ", pages[i]);
+    }
+    printf("\n");
+
+    printf("FCFS Page Faults: %d\n", FCFS(pages, n));
+    printf("LRU Page Faults: %d\n", LRU(pages, n));
+    printf("Optimal Page Faults: %d\n", Optimal(pages, n));
+
+    return 0;
+}
+
+int FCFS(int pages[], int n) {
+    int frame[MAX_FRAMES] = {-1, -1, -1}; 
+    int pageFaults = 0;
+
+    for (int i = 0; i < n; i++) {
+        bool pageFound = false;
+        for (int j = 0; j < MAX_FRAMES; j++) {
+            if (frame[j] == pages[i]) {
+                pageFound = true;
+                break;
+            }
+        }
+        if (!pageFound) { 
+            frame[pageFaults % MAX_FRAMES] = pages[i]; 
+            pageFaults++;
+        }
+    }
+    return pageFaults;
+}
+
+int LRU(int pages[], int n) {
+    int frame[MAX_FRAMES] = {-1, -1, -1}; 
+    int pageFaults = 0;
+    int lastUsed[MAX_FRAMES] = {-1, -1, -1}; 
+
+    for (int i = 0; i < n; i++) {
+        bool pageFound = false;
+        for (int j = 0; j < MAX_FRAMES; j++) {
+            if (frame[j] == pages[i]) {
+                pageFound = true;
+                lastUsed[j] = i; 
+                break;
+            }
+        }
+        if (!pageFound) { 
+            
+            int lruIndex = 0;
+            for (int j = 1; j < MAX_FRAMES; j++) {
+                if (lastUsed[j] < lastUsed[lruIndex]) {
+                    lruIndex = j;
+                }
+            }
+            frame[lruIndex] = pages[i];
+            lastUsed[lruIndex] = i;      
+            pageFaults++;
+        }
+    }
+    return pageFaults;
+}
+
+int Optimal(int pages[], int n) {
+    int frame[MAX_FRAMES] = {-1, -1, -1};
+    int pageFaults = 0;
+
+    for (int i = 0; i < n; i++) {
+        bool pageFound = false;
+        for (int j = 0; j < MAX_FRAMES; j++) {
+            if (frame[j] == pages[i]) {
+                pageFound = true; 
+                break;
+            }
+        }
+        if (!pageFound) { 
+           
+            int replaceIndex = -1;
+            int farthest = i;
+
+            for (int j = 0; j < MAX_FRAMES; j++) {
+                int k;
+                for (k = i + 1; k < n; k++) {
+                    if (frame[j] == pages[k]) {
+                        if (k > farthest) {
+                            farthest = k;
+                            replaceIndex = j;
+                        }
+                        break;
+                    }
+                }
+                if (k == n) { 
+                    replaceIndex = j;
+                    break;
+                }
+            }
+            frame[replaceIndex] = pages[i];
+            pageFaults++;
+        }
+    }
+    return pageFaults;
+}

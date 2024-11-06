@@ -1,0 +1,39 @@
+12 sstf
+
+#include <stdio.h>
+#include <limits.h>
+#include <stdlib.h>
+
+void sstf(int requests[], int n, int head) {
+    int totalSeekTime = 0;
+    int visited[100] = {0};  
+
+    printf("Order of requests: ");
+    for (int i = 0; i < n; i++) {
+        int minIndex = -1, minDistance = INT_MAX;
+
+        for (int j = 0; j < n; j++) {
+            if (!visited[j]) {
+                int distance = abs(requests[j] - head);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    minIndex = j;
+                }
+            }
+        }
+        if (minIndex == -1) break; 
+
+        visited[minIndex] = 1;
+        totalSeekTime += abs(requests[minIndex] - head);
+        head = requests[minIndex];
+        printf("%d ", head);
+    }
+    printf("\nTotal Seek Time: %d\n", totalSeekTime);
+}
+
+int main() {
+    int requests[] = {100, 180, 30, 50, 10, 90, 20};
+    int n = sizeof(requests) / sizeof(requests[0]);
+    sstf(requests, n, 50); 
+    return 0;
+}

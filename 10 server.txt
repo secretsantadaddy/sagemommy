@@ -1,0 +1,101 @@
+10 server 
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+
+#define FIFO1 "fifo1" 
+#define FIFO2 "fifo2" 
+
+void count_stats(char *sentence, int *chars, int *words, int *lines) {
+    *chars = strlen(sentence);
+    *words = 0;
+    *lines = 0;
+
+    int in_word = 0;
+    for (int i = 0; i < *chars; i++) {
+        if (sentence[i] == '\n') {
+            (*lines)++;
+        }
+        if (sentence[i] == ' ' || sentence[i] == '\n' || sentence[i] == '\t') {
+            in_word = 0;
+        } else if (!in_word) {
+            in_word = 1;
+            (*words)++;
+        }
+    }
+    if (*lines == 0) {
+        *lines = 1;
+    }
+}
+
+int main() {
+    char sentence[1024];
+    int chars, words, lines;
+    char result[1024];
+
+    int fd1 = open(FIFO1, O_RDONLY);
+    read(fd1, sentence, sizeof(sentence));
+    close(fd1);
+
+    count_stats(sentence, &chars, &words, &lines);
+
+    FILE *fp = fopen("output.txt", "w");
+    fprintf(fp, "Number of characters: %d\n", chars);
+    fprintf(fp, "Number of words: %d\n", words);
+    fprintf(fp, "Number of lines: %d\n", lines);
+    fclose(fp);
+
+    fp = fopen("output.txt", "r");
+    fread(result, sizeof(char), sizeof(result), fp);
+    fclose(fp);
+
+    int fd2 = open(FIFO2, O_WRONLY);
+    write(fd2, result, strlen(result) + 1);
+    close(fd2);
+
+    return 0;
+}
+
+
+10 client
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+
+#define FIFO1 "fifo1" 
+#define FIFO2 "fifo2" 
+
+int main() {
+    char sentence[1024];
+    char result[1024];
+
+    mkfifo(FIFO1, 0666);
+    mkfifo(FIFO2, 0666);
+
+    printf("Enter a sentence: ");
+    fgets(sentence, sizeof(sentence), stdin);
+
+    int fd1 = open(FIFO1, O_WRONLY);
+    write(fd1, sentence, strlen(sentence) + 1);
+    close(fd1);
+
+    int fd2 = open(FIFO2, O_RDONLY);
+    read(fd2, result, sizeof(result));
+    close(fd2);
+
+    printf("Processed output:\n%s", result);
+
+    unlink(FIFO1);
+    unlink(FIFO2);
+
+    return 0;
+}

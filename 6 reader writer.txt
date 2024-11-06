@@ -1,0 +1,56 @@
+6 reader writer
+
+#include <stdio.h>
+#include <pthread.h>
+#include <unistd.h>
+
+pthread_mutex_t resource = PTHREAD_MUTEX_INITIALIZER;  
+pthread_mutex_t rmutex = PTHREAD_MUTEX_INITIALIZER;    
+int read_count = 0;
+
+void* reader(void* arg) {
+    while (1) {
+        pthread_mutex_lock(&rmutex);
+        read_count++;
+        if (read_count == 1)
+            pthread_mutex_lock(&resource); 
+        pthread_mutex_unlock(&rmutex);
+
+        printf("Reader %ld is reading\n", (long)arg);
+        sleep(1);
+
+        pthread_mutex_lock(&rmutex);
+        read_count--;
+        if (read_count == 0)
+            pthread_mutex_unlock(&resource);
+        pthread_mutex_unlock(&rmutex);
+        
+        sleep(1);
+    }
+}
+
+void* writer(void* arg) {
+    while (1) {
+        pthread_mutex_lock(&resource);  
+
+        printf("Writer %ld is writing\n", (long)arg);
+        sleep(1);
+
+        pthread_mutex_unlock(&resource);
+        sleep(1);
+    }
+}
+
+int main() {
+    pthread_t r1, r2, w1;
+    
+    pthread_create(&r1, NULL, reader, (void*)1);
+    pthread_create(&r2, NULL, reader, (void*)2);
+    pthread_create(&w1, NULL, writer, (void*)1);
+
+    pthread_join(r1, NULL);
+    pthread_join(r2, NULL);
+    pthread_join(w1, NULL);
+
+    return 0;
+}
